@@ -42,3 +42,34 @@ npm run build
 ```sh
 npm run lint
 ```
+
+## Docker Setup
+
+### Start Development Environment (with Hot-Reload)
+
+From the project root:
+
+```sh
+docker compose up
+```
+
+Or run in detached mode:
+
+```sh
+docker compose up -d
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser. Any edits made in `frontend/src` will automatically hot-reload inside the container.
+
+### Stop Container
+
+```sh
+docker compose down
+```
+
+### Build Production Image (Nginx)
+
+```sh
+docker build --target production -t subscriptiq-frontend:prod ./frontend
+docker run -p 8080:80 subscriptiq-frontend:prod
+```
