@@ -1,0 +1,110 @@
+# Environment & Secrets
+.env
+.env.*
+*.env
+!*.env.example
+*.key
+*.pem
+secrets/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python Testing & Linting
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Machine Learning & Caches
+models_cache/
+backend/models_cache/
+.cache/
+
+# Databases & Local Storage
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+postgres_data/
+qdrant_data/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+dist-ssr/
+coverage/
+*.local
+*.timestamp-*-*.mjs
+*.tsbuildinfo
+.eslintcache
+.oxlintcache
+
+# Cypress & Vitest
+/cypress/videos/
+/cypress/screenshots/
+__screenshots__/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
