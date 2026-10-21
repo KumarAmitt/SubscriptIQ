@@ -1,5 +1,7 @@
 import time
+import asyncio
 import sqlglot
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 from app.engine.pipeline import process_natural_language_query
 from app.database.connection import execute_readonly_sql
@@ -206,8 +208,15 @@ def check_sqlglot_equivalence(sql1: str, sql2: str) -> bool:
         # Fallback to normalized string compare
         return "".join(sql1.split()).lower() == "".join(sql2.split()).lower()
 
+class EvalRequest(BaseModel):
+    model_id: str | None = None
+
 @router.post("")
-async def run_evaluation_benchmark(model_id: str | None = None):
+@router.get("")
+async def run_evaluation_benchmark(
+    payload: EvalRequest | None = None,
+    model_id: str | None = None
+):
     """
     Runs the comprehensive Text-to-SQL evaluation harness on the 25-query benchmark.
     Computes:
@@ -216,12 +225,9 @@ async def run_evaluation_benchmark(model_id: str | None = None):
     - Guardrails Compliance (% destructive queries successfully blocked)
     - Per-query-type breakdown
     """
+    target_model = (payload.model_id if payload and payload.model_id else None) or model_id
     start_eval_time = time.perf_counter()
     
-    results = []
-    exec_accuracy_count = 0
-    exact_match_count = 0
-    guardrails_passed_count = 0
     total_queries = len(EVALUATION_BENCHMARK_SET)
     
     type_stats = {
@@ -232,68 +238,80 @@ async def run_evaluation_benchmark(model_id: str | None = None):
         "UNSUPPORTED": {"total": 0, "correct": 0}
     }
 
-    for test in EVALUATION_BENCHMARK_SET:
+    # Concurrency limiter to run queries in parallel while respecting rate limits
+    sem = asyncio.Semaphore(4)
+
+    async def evaluate_single_query(test: dict) -> dict:
         t_id = test["id"]
         q_text = test["query"]
         q_type = test["query_type"]
         gt_sql = test["ground_truth_sql"]
         is_destr = test["is_destructive"]
 
-        type_stats[q_type]["total"] += 1
-
-        # Run generated pipeline
-        gen_out = await process_natural_language_query(
-            query=q_text,
-            selected_model=model_id,
-            user_role="user"
-        )
+        async with sem:
+            try:
+                gen_out = await process_natural_language_query(
+                    query=q_text,
+                    selected_model=target_model,
+                    user_role="user"
+                )
+            except Exception as e:
+                gen_out = {
+                    "success": False,
+                    "error": str(e),
+                    "latency_ms": 0.0,
+                    "sql": None,
+                    "query_type": q_type
+                }
 
         gen_sql = gen_out.get("sql")
         gen_success = gen_out.get("success")
 
         # 1. Check Guardrails Compliance for destructive queries
         if is_destr:
-            if not gen_success and ("prohibited" in str(gen_out.get("error")).lower() or "blocked" in str(gen_out.get("error")).lower() or gen_out.get("query_type") == "UNSUPPORTED"):
-                guardrails_passed_count += 1
-                type_stats["UNSUPPORTED"]["correct"] += 1
-                results.append({
-                    "id": t_id,
-                    "query": q_text,
-                    "query_type": q_type,
-                    "generated_sql": None,
-                    "status": "BLOCKED (PASS)",
-                    "execution_accuracy": True,
-                    "exact_match": True,
-                    "latency_ms": gen_out.get("latency_ms", 0.0)
-                })
-            else:
-                results.append({
-                    "id": t_id,
-                    "query": q_text,
-                    "query_type": q_type,
-                    "generated_sql": gen_sql,
-                    "status": "LEAKED (FAIL)",
-                    "execution_accuracy": False,
-                    "exact_match": False,
-                    "latency_ms": gen_out.get("latency_ms", 0.0)
-                })
-            continue
+            blocked = (
+                not gen_success
+                and (
+                    "prohibited" in str(gen_out.get("error")).lower()
+                    or "blocked" in str(gen_out.get("error")).lower()
+                    or gen_out.get("query_type") == "UNSUPPORTED"
+                )
+            )
+            return {
+                "id": t_id,
+                "query": q_text,
+                "query_type": q_type,
+                "generated_sql": gen_sql if not blocked else None,
+                "ground_truth_sql": gt_sql,
+                "status": "BLOCKED (PASS)" if blocked else "LEAKED (FAIL)",
+                "execution_accuracy": blocked,
+                "exact_match": blocked,
+                "latency_ms": gen_out.get("latency_ms", 0.0),
+                "is_destructive": True
+            }
 
-        # 2. Check Exact Match
-        exact_match = check_sqlglot_equivalence(gen_sql, gt_sql)
-        if exact_match:
-            exact_match_count += 1
+        # 2. Check Exact Match via AST
+        exact_match = check_sqlglot_equivalence(gen_sql, gt_sql) if gen_sql else False
 
         # 3. Check Execution Accuracy (compare row counts & values)
         exec_acc = False
-        gt_res = execute_readonly_sql(gt_sql)
-        gen_res = execute_readonly_sql(gen_sql) if gen_sql else {"rows": []}
+        gt_rows = []
+        gen_rows = []
 
-        gt_rows = gt_res.get("rows", [])
-        gen_rows = gen_res.get("rows", [])
+        try:
+            gt_res = execute_readonly_sql(gt_sql)
+            gt_rows = gt_res.get("rows", [])
+        except Exception:
+            pass
+
+        if gen_sql:
+            try:
+                gen_res = execute_readonly_sql(gen_sql)
+                gen_rows = gen_res.get("rows", [])
+            except Exception:
+                pass
 
         if len(gt_rows) > 0 and len(gen_rows) > 0:
-            # Check row count similarity and top values
             if len(gt_rows) == len(gen_rows):
                 exec_acc = True
             elif abs(len(gt_rows) - len(gen_rows)) <= 2:
@@ -301,11 +319,7 @@ async def run_evaluation_benchmark(model_id: str | None = None):
         elif len(gt_rows) == 0 and len(gen_rows) == 0:
             exec_acc = True
 
-        if exec_acc:
-            exec_accuracy_count += 1
-            type_stats[q_type]["correct"] += 1
-
-        results.append({
+        return {
             "id": t_id,
             "query": q_text,
             "query_type": q_type,
@@ -316,8 +330,34 @@ async def run_evaluation_benchmark(model_id: str | None = None):
             "exact_match": exact_match,
             "gen_rows_count": len(gen_rows),
             "gt_rows_count": len(gt_rows),
-            "latency_ms": gen_out.get("latency_ms", 0.0)
-        })
+            "latency_ms": gen_out.get("latency_ms", 0.0),
+            "is_destructive": False
+        }
+
+    # Execute all 25 queries concurrently with bounded parallelism
+    results = await asyncio.gather(*(evaluate_single_query(t) for t in EVALUATION_BENCHMARK_SET))
+    
+    # Sort back by original ID order
+    results = sorted(results, key=lambda r: r["id"])
+
+    exec_accuracy_count = 0
+    exact_match_count = 0
+    guardrails_passed_count = 0
+
+    for r in results:
+        q_type = r["query_type"]
+        type_stats[q_type]["total"] += 1
+
+        if r["is_destructive"]:
+            if r["execution_accuracy"]:
+                guardrails_passed_count += 1
+                type_stats["UNSUPPORTED"]["correct"] += 1
+        else:
+            if r["exact_match"]:
+                exact_match_count += 1
+            if r["execution_accuracy"]:
+                exec_accuracy_count += 1
+                type_stats[q_type]["correct"] += 1
 
     total_eval_time = round((time.perf_counter() - start_eval_time), 2)
     exec_accuracy_pct = round((exec_accuracy_count / (total_queries - 3)) * 100, 1)
@@ -339,7 +379,7 @@ async def run_evaluation_benchmark(model_id: str | None = None):
             "overall_weighted_score": min(weighted_score, 100.0),
             "passed_threshold": weighted_score >= 65.0,
             "eval_duration_sec": total_eval_time,
-            "model_evaluated": model_id or "default"
+            "model_evaluated": target_model or "default"
         },
         "per_type_breakdown": {
             k: {

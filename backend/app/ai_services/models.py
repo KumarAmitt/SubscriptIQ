@@ -29,7 +29,8 @@ def get_langchain_model(model_id: str, temperature: float = 0.1) -> Optional[Bas
             groq_api_key=settings.GROQ_API_KEY,
             temperature=temperature,
             max_tokens=1024,
-            max_retries=2
+            max_retries=0,
+            timeout=10
         )
 
     # 2. Google DeepMind Models (ChatGoogleGenerativeAI)
@@ -51,7 +52,8 @@ def get_langchain_model(model_id: str, temperature: float = 0.1) -> Optional[Bas
             google_api_key=settings.GEMINI_API_KEY,
             temperature=temperature,
             max_output_tokens=1024,
-            max_retries=2
+            max_retries=0,
+            timeout=10
         )
 
     # Default fallback to Groq if key exists, else Google
@@ -61,7 +63,8 @@ def get_langchain_model(model_id: str, temperature: float = 0.1) -> Optional[Bas
             groq_api_key=settings.GROQ_API_KEY,
             temperature=temperature,
             max_tokens=1024,
-            max_retries=2
+            max_retries=0,
+            timeout=10
         )
     elif settings.GEMINI_API_KEY:
         return ChatGoogleGenerativeAI(
@@ -69,7 +72,8 @@ def get_langchain_model(model_id: str, temperature: float = 0.1) -> Optional[Bas
             google_api_key=settings.GEMINI_API_KEY,
             temperature=temperature,
             max_output_tokens=1024,
-            max_retries=2
+            max_retries=0,
+            timeout=10
         )
 
     return None

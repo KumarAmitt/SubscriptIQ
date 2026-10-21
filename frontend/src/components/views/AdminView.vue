@@ -615,8 +615,13 @@
             @click="runEvaluationBenchmark"
           >
             <Icon name="play" :size="12" />
-            <span>{{ isRunningEval ? 'Running Benchmark...' : 'Run 25-Query Eval Harness' }}</span>
+            <span>{{ isRunningEval ? 'Running Benchmark (25 queries)...' : 'Run 25-Query Eval Harness' }}</span>
           </button>
+        </div>
+
+        <div v-if="isRunningEval" class="eval-loading-state font-mono">
+          <div class="status-pulse-dot"></div>
+          <span>Executing 25-query benchmark against live LangGraph pipeline &amp; PostgreSQL... (~15-20s)</span>
         </div>
 
         <div v-if="evalReport" class="eval-results-container">
@@ -1147,19 +1152,25 @@ const evalReport = ref(null)
 
 async function runEvaluationBenchmark() {
   isRunningEval.value = true
+  evalReport.value = null
   try {
-    const res = await fetch(`${API_BASE}/eval`, {
+    const selectedModel = modelConfig.value.default_model || 'openai/gpt-oss-120b'
+    const res = await fetch(`${API_BASE}/eval?model_id=${encodeURIComponent(selectedModel)}`, {
       method: 'POST',
       headers: authStore.getAuthHeaders(),
-      body: JSON.stringify({ model_id: modelConfig.value.default_model })
+      body: JSON.stringify({ model_id: selectedModel })
     })
     if (res.status === 403) {
       showToast('Admin privilege required to execute evaluation harness.', 'error')
       return
     }
     if (res.ok) {
-      evalReport.value = await res.json()
-      showToast(`Evaluation complete! Score: ${evalReport.value.summary.overall_weighted_score}%`)
+      const data = await res.json()
+      evalReport.value = data
+      showToast(`Evaluation complete! Score: ${data.summary?.overall_weighted_score}%`)
+    } else {
+      const errData = await res.json().catch(() => ({}))
+      showToast(`Evaluation failed (${res.status}): ${errData.detail || res.statusText || 'Server error'}`, 'error')
     }
   } catch (err) {
     showToast('Evaluation run error: ' + err.message, 'error')
@@ -1868,6 +1879,19 @@ onMounted(() => {
 }
 
 /* Evaluation Benchmark */
+.eval-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--accent);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
 .eval-results-container {
   display: flex;
   flex-direction: column;

@@ -22,9 +22,10 @@ Instead of waiting days for business intelligence teams to write custom SQL quer
 
 ## 🎬 Demo Video
 
-[![SubscriptIQ Demo Video](https://img.shields.io/badge/Demo%20Video-Watch%20on%20YouTube-red?style=for-the-badge&logo=youtube)](YOUR_DEMO_VIDEO_LINK_HERE)
+[![SubscriptIQ Demo Video](https://img.shields.io/badge/Demo%20Video-Watch%20on%20Google%20Drive-4285F4?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1O0jVHawd3OEUOs9UlB0dNXr4ANKtQ9Oa/view?usp=sharing)
 
-> *Demo video link placeholder — update `YOUR_DEMO_VIDEO_LINK_HERE` with your recording URL.*
+🔗 **Direct Video Link:** [Watch SubscriptIQ Walkthrough & Demo on Google Drive](https://drive.google.com/file/d/1O0jVHawd3OEUOs9UlB0dNXr4ANKtQ9Oa/view?usp=sharing)
+
 
 ---
 
@@ -93,6 +94,19 @@ Once started, access the application at:
 |---|---|---|---|
 | **Administrator** | `admin@subscriptiq.ai` | `admin123` | Full access to Schema, Examples, Logs, Guardrails, and Model Config |
 | **Standard User** | `user@subscriptiq.ai` | `user123` | Natural Language Querying, Dashboard, and AI Copilot |
+
+### 💬 Sample Queries to Test
+
+Once the application is running, open the **AI Chat Assistant** in the dashboard and test questions across different analytical categories:
+
+| Category | Example Question | What to Observe |
+|---|---|---|
+| **Filtering** | `Show all active SaaS subscriptions` | Generates simple WHERE filter, displays active tools sorted by cost. |
+| **Aggregation & Charts** | `Show total monthly spend grouped by subscription category` | Generates `GROUP BY` SQL, displays table and **auto-renders doughnut/bar chart**. |
+| **Relational Joins** | `List all vendors and the total annual contract value for their subscriptions` | Generates `JOIN` between `subscriptions` and `vendors`, aggregating ACV. |
+| **Temporal Logic** | `Which subscriptions are renewing in the next 30 days?` | Generates date arithmetic comparing `renewal_date` against `CURRENT_DATE`. |
+| **Dormant Seat Audit** | `Find all dormant license seats` | Queries `license_allocations` for inactive seats to highlight cost-saving potential. |
+| **Guardrails & Safety** | `Drop the subscriptions table and delete all invoices` | **Blocked immediately** by the AST validator and pre-LLM classifier. |
 
 ### 🛑 Stopping Containers
 
