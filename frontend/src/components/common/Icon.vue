@@ -58,6 +58,36 @@
       d="M18 20V10m-6 10V4M6 20v-6"
     />
 
+    <!-- Database / Schema -->
+    <path
+      v-else-if="name === 'database'"
+      d="M3 5c0-1.66 4.03-3 9-3s9 1.34 9 3-4.03 3-9 3-9-1.34-9-3zm0 7c0 1.66 4.03 3 9 3s9-1.34 9-3V5M3 19c0 1.66 4.03 3 9 3s9-1.34 9-3v-7"
+    />
+
+    <!-- Book / Examples -->
+    <path
+      v-else-if="name === 'book' || name === 'examples'"
+      d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 0 4 22z"
+    />
+
+    <!-- Terminal / Logs -->
+    <path
+      v-else-if="name === 'terminal' || name === 'logs'"
+      d="m4 17 6-6-6-6m8 14h8"
+    />
+
+    <!-- Lock / Guardrails -->
+    <path
+      v-else-if="name === 'lock' || name === 'guardrails'"
+      d="M7 11V7a5 5 0 0 1 10 0v4m-12 0h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"
+    />
+
+    <!-- Play / Run -->
+    <path
+      v-else-if="name === 'play'"
+      d="m5 3 14 9-14 9V3z"
+    />
+
     <!-- Sidebar Toggle -->
     <path
       v-else-if="name === 'sidebar-toggle'"
@@ -94,10 +124,47 @@
       d="m6 9 6 6 6-6"
     />
 
+    <!-- Chevron Up -->
+    <path
+      v-else-if="name === 'chevron-up'"
+      d="m18 15-6-6-6 6"
+    />
+
     <!-- Chevron Right -->
     <path
       v-else-if="name === 'chevron-right'"
       d="m9 18 6-6-6-6"
+    />
+
+    <!-- Plus / Add -->
+    <path
+      v-else-if="name === 'plus' || name === 'add'"
+      d="M12 5v14M5 12h14"
+    />
+
+    <!-- Microphone / Voice -->
+    <path
+      v-else-if="name === 'mic' || name === 'microphone'"
+      d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8"
+    />
+
+    <!-- Arrow Right -->
+    <path
+      v-else-if="name === 'arrow-right'"
+      d="M5 12h14M12 5l7 7-7 7"
+    />
+
+    <!-- Pin (Outline) -->
+    <path
+      v-else-if="name === 'pin'"
+      d="M12 17v5M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"
+    />
+
+    <!-- Pin Filled (Active Pinned State) -->
+    <path
+      v-else-if="name === 'pin-filled'"
+      fill="currentColor"
+      d="M12 17v5M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"
     />
 
     <!-- Close / X -->
@@ -128,6 +195,54 @@
     <path
       v-else-if="name === 'trash'"
       d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+
+    <!-- Download / Export -->
+    <path
+      v-else-if="name === 'download' || name === 'export'"
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"
+    />
+
+    <!-- Table -->
+    <path
+      v-else-if="name === 'table'"
+      d="M3 3h18v18H3V3zm0 6h18M3 15h18M9 3v18M15 3v18"
+    />
+
+    <!-- Info / Help Circle -->
+    <path
+      v-else-if="name === 'info' || name === 'help-circle'"
+      d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 16v-4 M12 8h.01"
+    />
+
+    <!-- Check Circle / Success -->
+    <path
+      v-else-if="name === 'check-circle' || name === 'success'"
+      d="M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4 12 14.01l-3-3"
+    />
+
+    <!-- Zap / Fast -->
+    <path
+      v-else-if="name === 'zap' || name === 'lightning'"
+      d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+    />
+
+    <!-- Target / Precision -->
+    <path
+      v-else-if="name === 'target'"
+      d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+    />
+
+    <!-- Trending Up / Growth -->
+    <path
+      v-else-if="name === 'trending-up'"
+      d="m23 6-9.5 9.5-5-5L1 18 M17 6h6v6"
+    />
+
+    <!-- Alert Triangle / Warning -->
+    <path
+      v-else-if="name === 'alert-triangle' || name === 'warning'"
+      d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z M12 9v4 M12 17h.01"
     />
 
     <!-- Fallback circle -->

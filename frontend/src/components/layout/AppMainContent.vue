@@ -1,68 +1,80 @@
 <template>
   <main class="app-main-content">
-    <!-- Editor Tabs Bar -->
-    <div class="tabs-bar">
-      <div class="tabs-scroll">
+    <!-- Code-Editor Style Tab Bar -->
+    <div class="editor-tabs-bar">
+      <div class="tabs-scroll-area">
         <div
           v-for="tab in uiStore.tabs"
           :key="tab.id"
-          class="editor-tab"
-          :class="{ 'active': uiStore.activeTabId === tab.id }"
+          class="editor-tab font-mono"
+          :class="{
+            'is-active': uiStore.activeTabId === tab.id,
+            'is-pinned': tab.isPinned
+          }"
           @click="uiStore.activateTab(tab)"
         >
-          <Icon :name="tab.icon" :size="13" class="tab-icon" />
-          <span class="tab-title font-mono">{{ tab.name }}</span>
-          <button
-            v-if="tab.closable"
-            class="tab-close-btn"
-            @click.stop="uiStore.closeTab(tab.id)"
-            title="Close tab"
-          >
-            <Icon name="close" :size="10" />
-          </button>
+          <div class="tab-icon">
+            <Icon :name="tab.icon" :size="12" />
+          </div>
+          <span class="tab-name" :title="cleanTabName(tab.name)">{{ cleanTabName(tab.name) }}</span>
+
+          <!-- Tab Action Controls (for all tabs except Dashboard) -->
+          <div v-if="tab.id !== 'dashboard'" class="tab-actions">
+            <!-- Pin / Unpin Button -->
+            <button
+              class="tab-action-btn tab-pin-btn"
+              :class="{ 'is-pinned': tab.isPinned }"
+              @click.stop="uiStore.togglePinTab(tab.id)"
+              :title="tab.isPinned ? 'Pinned (saved across page refresh). Click to unpin' : 'Pin tab (keep after page refresh)'"
+            >
+              <Icon :name="tab.isPinned ? 'pin-filled' : 'pin'" :size="11" />
+            </button>
+
+            <!-- Cross / Close Button (shown only when unpinned, matching 'on unpin it can be removed') -->
+            <button
+              v-if="!tab.isPinned && tab.closable"
+              class="tab-action-btn tab-close-btn"
+              @click.stop="uiStore.closeTab(tab.id)"
+              title="Close tab"
+            >
+              <Icon name="close" :size="10" />
+            </button>
+          </div>
         </div>
       </div>
-
-      <div class="tabs-right-actions">
-        <span class="view-indicator font-mono">IDE Editor Mode</span>
-      </div>
     </div>
 
-    <!-- Breadcrumb Path Bar -->
-    <div class="editor-breadcrumb">
-      <div class="breadcrumb-trail font-mono">
-        <span class="crumb-root">SubscriptIQ</span>
-        <span class="crumb-separator">&gt;</span>
-        <span class="crumb-folder">views</span>
-        <span class="crumb-separator">&gt;</span>
-        <span class="crumb-file">{{ activeFileName }}</span>
-      </div>
-    </div>
-
-    <!-- Dynamic Viewport Body -->
+    <!-- Middle Workspace Viewport Body -->
     <div class="viewport-body">
-      <!-- Admin Submenu Views -->
+      <!-- 1. Admin Submenu Views (Schema, Examples, Logs, Guardrails, Models) -->
       <AdminView v-if="uiStore.activeNav.startsWith('admin')" />
 
-      <!-- Default / Dashboard View -->
+      <!-- 2. Detailed In-Depth Query Analysis View -->
+      <QueryAnalysisView v-else-if="uiStore.activeNav === 'query-analysis' || uiStore.activeTabId === 'query-analysis' || uiStore.activeNav === 'query-results'" />
+
+      <!-- 3. About SubscriptIQ Platform & FAQ View -->
+      <AboutView v-else-if="uiStore.activeNav === 'about' || uiStore.activeTabId === 'about'" />
+
+      <!-- 4. Default / Dashboard View (Always available on dashboard tab) -->
       <DashboardView v-else />
     </div>
   </main>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import Icon from '@/components/common/Icon.vue'
 import DashboardView from '@/components/views/DashboardView.vue'
 import AdminView from '@/components/views/AdminView.vue'
+import QueryAnalysisView from '@/components/views/QueryAnalysisView.vue'
+import AboutView from '@/components/views/AboutView.vue'
+import Icon from '@/components/common/Icon.vue'
 
 const uiStore = useUIStore()
 
-const activeFileName = computed(() => {
-  const current = uiStore.tabs.find((t) => t.id === uiStore.activeTabId)
-  return current ? current.name : 'Dashboard.vue'
-})
+function cleanTabName(name) {
+  if (!name) return ''
+  return String(name).replace(/\.(vue|sql|qdrant|audit|rules|json|ts|js|py)$/i, '')
+}
 </script>
 
 <style scoped>
@@ -71,128 +83,144 @@ const activeFileName = computed(() => {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-app);
-  min-width: 0; /* Crucial for inner scrolling and flex shrinkage */
+  min-width: 0;
   overflow: hidden;
 }
 
-/* Tabs Bar */
-.tabs-bar {
+/* Code-Editor Style Tab Bar */
+.editor-tabs-bar {
   height: 36px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
+  padding: 0 8px;
   user-select: none;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
 }
 
-.tabs-scroll {
+.tabs-scroll-area {
   display: flex;
+  align-items: center;
+  gap: 2px;
   height: 100%;
-  overflow-x: auto;
-  align-items: flex-end;
 }
 
 .editor-tab {
+  height: 100%;
   display: flex;
   align-items: center;
   gap: 7px;
   padding: 0 12px;
-  height: 32px;
-  background-color: var(--bg-tertiary);
-  border-right: 1px solid var(--border-color);
-  border-top: 2px solid transparent;
+  font-size: 12px;
   color: var(--text-muted);
-  font-size: 11.5px;
+  background-color: transparent;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  position: relative;
 }
 
 .editor-tab:hover {
-  background-color: var(--bg-card);
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
 }
 
-.editor-tab.active {
+.editor-tab.is-active {
+  color: var(--accent);
   background-color: var(--bg-app);
-  border-top-color: var(--accent);
-  color: var(--text-primary);
-  font-weight: var(--font-weight-medium);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
 }
 
 .tab-icon {
-  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  color: inherit;
 }
 
-.editor-tab.active .tab-icon {
+.tab-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-tab.is-pinned {
+  border-left: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.editor-tab.is-pinned .tab-icon {
   color: var(--accent);
-  opacity: 1;
 }
 
-.tab-title {
-  letter-spacing: -0.01em;
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
 }
 
-.tab-close-btn {
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
+.tab-action-btn {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
   color: var(--text-muted);
-  margin-left: 2px;
 }
 
-.tab-close-btn:hover {
+.tab-pin-btn {
+  opacity: 0;
+}
+
+.editor-tab:hover .tab-pin-btn,
+.editor-tab.is-active .tab-pin-btn {
+  opacity: 0.65;
+}
+
+.tab-pin-btn:hover {
+  opacity: 1 !important;
+  color: var(--accent);
   background-color: var(--bg-hover);
-  color: var(--text-primary);
+  transform: scale(1.08);
 }
 
-.tabs-right-actions {
-  padding-right: 8px;
+.tab-pin-btn.is-pinned {
+  opacity: 1 !important;
+  color: var(--accent);
+  background-color: rgba(14, 165, 233, 0.12);
 }
 
-.view-indicator {
-  font-size: 10px;
-  color: var(--text-muted);
+.tab-pin-btn.is-pinned:hover {
+  background-color: rgba(14, 165, 233, 0.22);
+}
+
+.tab-close-btn {
   opacity: 0.7;
 }
 
-/* Breadcrumb Bar */
-.editor-breadcrumb {
-  height: 24px;
-  background-color: var(--bg-primary);
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  font-size: 11px;
+.editor-tab:hover .tab-close-btn {
+  opacity: 1;
 }
 
-.breadcrumb-trail {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-muted);
+.tab-close-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  transform: scale(1.08);
 }
 
-.crumb-separator {
-  opacity: 0.4;
-}
-
-.crumb-file {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
-}
-
-/* Viewport Body */
 .viewport-body {
   flex: 1;
   overflow-y: auto;
-  padding: 18px 24px 30px 24px;
+  padding: 16px 20px;
 }
 </style>

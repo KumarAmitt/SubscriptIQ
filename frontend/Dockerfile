@@ -12,11 +12,14 @@ RUN npm install
 
 # --- Production Build Stage ---
 FROM base AS builder
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 COPY . .
 RUN npm run build
 
-# --- Production Stage (Nginx) ---
+# --- Production Stage (Nginx Reverse Proxy & Static Host) ---
 FROM nginx:alpine AS production
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

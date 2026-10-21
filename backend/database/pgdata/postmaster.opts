@@ -1,0 +1,1 @@
+/usr/lib/postgresql/18/bin/postgres "-D" "/home/galaxy/CODE/AI/capApp/SubscriptIQ/backend/database/pgdata" "-p" "5433" "-k" "/home/galaxy/CODE/AI/capApp/SubscriptIQ/backend/database/pgsockets"

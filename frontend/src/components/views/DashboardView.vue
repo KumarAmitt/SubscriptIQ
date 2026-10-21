@@ -3,42 +3,14 @@
     <!-- View Header & Action Bar -->
     <div class="view-header">
       <div class="header-titles">
-        <h1 class="view-title">Subscription Overview</h1>
-        <p class="view-subtitle">AI-assisted telemetry, license optimization, and contract forecasts</p>
+        <h1 class="view-title">Subscription Intelligence & Spend Telemetry</h1>
+        <p class="view-subtitle">Live SaaS contracts, seat telemetry, and automated AI cost optimization</p>
       </div>
 
       <div class="header-actions">
-        <div class="time-filter-pill font-mono">
-          <button class="filter-btn active">Month</button>
-          <button class="filter-btn">Quarter</button>
-          <button class="filter-btn">Year</button>
-        </div>
         <button class="primary-ai-btn" @click="triggerAiAudit">
           <Icon name="sparkles" :size="13" />
           <span>Run AI Cost Audit</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- AI Insights Highlight Banner -->
-    <div class="ai-banner">
-      <div class="banner-badge">
-        <Icon name="sparkles" :size="13" />
-        <span>COPILOT INTELLIGENCE</span>
-      </div>
-      <div class="banner-content">
-        <h3 class="banner-heading">3 Underutilized SaaS Seats Detected</h3>
-        <p class="banner-desc">
-          AI telemetry identified 12 dormant Figma and Notion seats over the last 45 days.
-          Downgrading unassigned tiers would save an estimated <strong>$340/month</strong>.
-        </p>
-      </div>
-      <div class="banner-actions">
-        <button class="banner-action-btn primary" @click="askCopilot('Help me optimize the 3 underutilized SaaS tools')">
-          Optimize Now
-        </button>
-        <button class="banner-action-btn secondary" @click="dismissBanner">
-          Dismiss
         </button>
       </div>
     </div>
@@ -58,21 +30,95 @@
       </div>
     </div>
 
+    <!-- AI Cost Optimization Opportunities Section (Live Detections) -->
+    <div v-if="recommendations.length > 0" class="recommendations-container">
+      <div class="recs-header">
+        <div class="recs-title-group">
+          <div class="ai-shield-pill font-mono">
+            <Icon name="sparkles" :size="12" />
+            <span>AI COST AUDIT OPPORTUNITIES</span>
+          </div>
+          <span class="recs-subtitle">Active telemetry detections with verified return on investment</span>
+        </div>
+        <button class="recs-audit-all-btn" @click="triggerAiAudit">
+          <Icon name="sparkles" :size="12" />
+          <span>Audit All Opportunities</span>
+        </button>
+      </div>
+
+      <div class="recs-grid">
+        <div v-for="rec in recommendations" :key="rec.id" class="rec-card">
+          <div class="rec-card-top">
+            <span class="rec-type-badge font-mono">{{ formatRecType(rec.recommendation_type) }}</span>
+            <span class="rec-savings font-mono">+{{ currencySymbol }}{{ Number(rec.estimated_monthly_savings).toLocaleString('en-IN') }}/mo</span>
+          </div>
+          <h4 class="rec-product">{{ rec.product_name }}</h4>
+          <p class="rec-desc">{{ rec.description }}</p>
+          <div class="rec-footer">
+            <span class="rec-confidence font-mono">
+              <span class="conf-dot"></span>
+              {{ Math.round(rec.confidence_score * 100) }}% confidence
+            </span>
+            <button class="rec-action-btn" @click="askChat(`Explain recommendation for ${rec.product_name} and estimate annual cost impact`)">
+              <span>Investigate</span>
+              <Icon name="arrow-right" :size="11" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Analytics Inquiries Carousel / Chips -->
+    <div class="quick-inquiries-bar">
+      <div class="quick-title font-mono">
+        <Icon name="analytics" :size="13" />
+        <span>QUICK NL QUERIES:</span>
+      </div>
+      <div class="chips-scroll">
+        <button
+          v-for="chip in quickChips"
+          :key="chip.label"
+          class="prompt-chip"
+          @click="askChat(chip.prompt)"
+        >
+          <span class="chip-icon">{{ chip.icon }}</span>
+          <span class="chip-text">{{ chip.label }}</span>
+          <span class="chip-badge font-mono">{{ chip.type }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Subscriptions Table Section -->
     <div class="table-container-card">
       <div class="table-toolbar">
         <div class="toolbar-title-group">
-          <h2 class="table-title">Tracked Subscriptions</h2>
+          <h2 class="table-title">Tracked Enterprise Subscriptions</h2>
           <span class="counter-tag font-mono">{{ filteredSubscriptions.length }} tools</span>
         </div>
 
-        <div class="table-search-group">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Filter subscriptions..."
-            class="table-search-input"
-          />
+        <div class="table-controls-group">
+          <!-- Category Filter Pills -->
+          <div class="category-filter-pills">
+            <button
+              v-for="cat in availableCategories"
+              :key="cat"
+              class="cat-pill"
+              :class="{ active: selectedCategory === cat }"
+              @click="selectedCategory = cat"
+            >
+              {{ cat }}
+            </button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="table-search-group">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search subscriptions or category..."
+              class="table-search-input"
+            />
+          </div>
         </div>
       </div>
 
@@ -121,7 +167,7 @@
                 </div>
               </td>
               <td class="font-mono price-cell">
-                ${{ sub.monthlyCost }}<span class="per-mo">/mo</span>
+                {{ currencySymbol }}{{ sub.monthlyCost }}<span class="per-mo">/mo</span>
               </td>
               <td class="font-mono text-muted date-cell">
                 {{ sub.renewalDate }}
@@ -132,7 +178,7 @@
                 </span>
               </td>
               <td class="text-right">
-                <button class="row-action-btn" @click="askCopilot(`Analyze ${sub.name} subscription metrics and contract terms`)">
+                <button class="row-action-btn" @click="askChat(`Audit ${sub.name} subscription metrics: assigned users, cost per user, unallocated seats, and dormant waste`)">
                   <Icon name="sparkles" :size="12" />
                   <span>Audit</span>
                 </button>
@@ -146,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useUIStore } from '@/stores/ui'
 import Icon from '@/components/common/Icon.vue'
@@ -154,152 +200,132 @@ import Icon from '@/components/common/Icon.vue'
 const chatStore = useChatStore()
 const uiStore = useUIStore()
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const currencySymbol = ref(import.meta.env.VITE_CURRENCY_SYMBOL || '₹')
+
 const searchQuery = ref('')
+const selectedCategory = ref('All')
+const isLoading = ref(true)
 
 const kpiCards = ref([
   {
     label: 'Total Monthly Spend',
-    value: '$14,840',
+    value: `${currencySymbol.value}62,85,500`,
     badge: 'MRR',
     badgeClass: 'neutral',
-    trend: '+3.2%',
+    trend: '+4.1%',
     trendClass: 'warning',
     subtext: 'vs last month',
   },
   {
     label: 'AI Cost Optimizations',
-    value: '$1,380',
+    value: `${currencySymbol.value}2,25,000`,
     badge: 'Savings',
     badgeClass: 'success',
-    trend: '9.3%',
+    trend: '9.4%',
     trendClass: 'positive',
     subtext: 'potential reclaim',
   },
   {
-    label: 'Active Licenses',
-    value: '42 / 48',
-    badge: 'Seats',
-    badgeClass: 'info',
-    trend: '87.5%',
-    trendClass: 'neutral',
-    subtext: 'overall utilization',
+    label: 'Dormant License Seats',
+    value: '290 Seats',
+    badge: 'Idle',
+    badgeClass: 'danger',
+    trend: '19.3%',
+    trendClass: 'warning',
+    subtext: 'inactive > 30 days',
   },
   {
     label: 'Upcoming Renewals',
-    value: '3 Tools',
+    value: '2 Tools',
     badge: '14 Days',
     badgeClass: 'warning',
-    trend: '$830',
+    trend: `${currencySymbol.value}8,50,000`,
     trendClass: 'neutral',
-    subtext: 'total contract value',
+    subtext: 'approaching renewal',
   },
 ])
 
-const subscriptions = ref([
-  {
-    id: 1,
-    name: 'GitHub Enterprise',
-    abbr: 'GH',
-    color: '#6366f1',
-    tier: 'Team Pro • 45 seats',
-    category: 'Engineering',
-    activeSeats: 43,
-    totalSeats: 45,
-    utilization: 95,
-    monthlyCost: '945.00',
-    renewalDate: 'Oct 28, 2026',
-    status: 'Optimal',
-    statusClass: 'optimal',
-  },
-  {
-    id: 2,
-    name: 'OpenAI Enterprise API',
-    abbr: 'OA',
-    color: '#10b981',
-    tier: 'Usage Tier 4',
-    category: 'AI Infrastructure',
-    activeSeats: 18,
-    totalSeats: 20,
-    utilization: 90,
-    monthlyCost: '4,200.00',
-    renewalDate: 'Nov 01, 2026',
-    status: 'High Load',
-    statusClass: 'active',
-  },
-  {
-    id: 3,
-    name: 'Figma Organization',
-    abbr: 'FG',
-    color: '#ec4899',
-    tier: 'Design Team Tier',
-    category: 'Product Design',
-    activeSeats: 8,
-    totalSeats: 16,
-    utilization: 50,
-    monthlyCost: '720.00',
-    renewalDate: 'Nov 12, 2026',
-    status: 'Underutilized',
-    statusClass: 'warning',
-  },
-  {
-    id: 4,
-    name: 'Datadog Pro APM',
-    abbr: 'DD',
-    color: '#f59e0b',
-    tier: 'Infrastructure Hosts',
-    category: 'DevOps / Observability',
-    activeSeats: 14,
-    totalSeats: 15,
-    utilization: 93,
-    monthlyCost: '2,400.00',
-    renewalDate: 'Nov 20, 2026',
-    status: 'Optimal',
-    statusClass: 'optimal',
-  },
-  {
-    id: 5,
-    name: 'Loom Enterprise',
-    abbr: 'LM',
-    color: '#38bdf8',
-    tier: 'Video Workspace',
-    category: 'Collaboration',
-    activeSeats: 6,
-    totalSeats: 25,
-    utilization: 24,
-    monthlyCost: '350.00',
-    renewalDate: 'Nov 04, 2026',
-    status: 'Overprovisioned',
-    statusClass: 'danger',
-  },
-  {
-    id: 6,
-    name: 'Notion AI Workspace',
-    abbr: 'NT',
-    color: '#a855f7',
-    tier: 'Plus + AI Addon',
-    category: 'Productivity',
-    activeSeats: 22,
-    totalSeats: 30,
-    utilization: 73,
-    monthlyCost: '480.00',
-    renewalDate: 'Dec 01, 2026',
-    status: 'Healthy',
-    statusClass: 'optimal',
-  },
-])
+const subscriptions = ref([])
+const recommendations = ref([])
 
-const filteredSubscriptions = computed(() => {
-  if (!searchQuery.value.trim()) return subscriptions.value
-  const q = searchQuery.value.toLowerCase()
-  return subscriptions.value.filter(
-    (s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.category.toLowerCase().includes(q) ||
-      s.status.toLowerCase().includes(q)
-  )
+const quickChips = [
+  { icon: '📊', label: 'Top 5 Subscriptions by Spend', type: 'AGGREGATE', prompt: 'Top 5 subscriptions by monthly spend' },
+  { icon: '⏳', label: 'Renewals Next 30 Days', type: 'TEMPORAL', prompt: 'Which subscriptions renew in the next 30 days?' },
+  { icon: '💤', label: 'Dormant Seats per Tool', type: 'JOIN', prompt: 'How many dormant license seats are there per tool?' },
+  { icon: '🏢', label: 'Department Spend Breakdown', type: 'JOIN', prompt: 'Total spend and active subscriptions by department' },
+  { icon: '📑', label: 'Pending or Overdue Invoices', type: 'SIMPLE', prompt: 'Show all pending or overdue invoices' },
+]
+
+const availableCategories = computed(() => {
+  const cats = new Set(subscriptions.value.map(s => s.category).filter(Boolean))
+  return ['All', ...Array.from(cats)]
 })
 
-function askCopilot(prompt) {
+function formatRecType(type) {
+  if (!type) return 'RECOMMENDATION'
+  return type.replace(/_/g, ' ').toUpperCase()
+}
+
+async function loadDashboardData() {
+  try {
+    const res = await fetch(`${API_BASE}/dashboard/stats`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.currency_symbol) {
+        currencySymbol.value = data.currency_symbol
+      }
+      const sym = currencySymbol.value
+      if (data.metrics) {
+        kpiCards.value[0].value = `${sym}${Number(data.metrics.total_monthly_spend || 0).toLocaleString('en-IN')}`
+        kpiCards.value[1].value = `${sym}${Number(data.metrics.projected_monthly_savings || 0).toLocaleString('en-IN')}`
+        kpiCards.value[2].value = `${data.metrics.dormant_seats} Seats`
+        kpiCards.value[3].value = `${data.metrics.renewals_in_14_days} Tools`
+      }
+      if (data.subscriptions && data.subscriptions.length > 0) {
+        subscriptions.value = data.subscriptions.map(s => ({
+          ...s,
+          monthlyCost: Number(s.monthly_cost).toLocaleString('en-IN'),
+          renewalDate: s.renewal,
+          statusClass: s.status === 'active' ? 'optimal' : s.status === 'under_review' ? 'warning' : 'active'
+        }))
+      }
+      if (data.recommendations && data.recommendations.length > 0) {
+        recommendations.value = data.recommendations
+      }
+    }
+  } catch (err) {
+    console.warn('Dashboard fetch notice:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadDashboardData()
+})
+
+const filteredSubscriptions = computed(() => {
+  let list = subscriptions.value
+
+  if (selectedCategory.value !== 'All') {
+    list = list.filter(s => s.category === selectedCategory.value)
+  }
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q) ||
+        s.status.toLowerCase().includes(q)
+    )
+  }
+
+  return list
+})
+
+function askChat(prompt) {
   if (uiStore.isChatCollapsed) {
     uiStore.toggleChat()
   }
@@ -307,11 +333,7 @@ function askCopilot(prompt) {
 }
 
 function triggerAiAudit() {
-  askCopilot('Perform a complete subscription telemetry audit and identify reclaimable seats.')
-}
-
-function dismissBanner(e) {
-  e.target.closest('.ai-banner').style.display = 'none'
+  askChat('Audit subscriptions with dormant seats and cost optimization recommendations')
 }
 </script>
 
@@ -350,135 +372,28 @@ function dismissBanner(e) {
   gap: 8px;
 }
 
-.time-filter-pill {
-  display: flex;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 2px;
-}
-
-.filter-btn {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  color: var(--text-secondary);
-}
-
-.filter-btn.active {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-}
-
 .primary-ai-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-md);
-  background: var(--accent);
+  background: var(--btn-primary-gradient);
+  border: 1px solid var(--btn-primary-border);
   color: #ffffff;
   font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  box-shadow: var(--accent-glow);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
   transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 .primary-ai-btn:hover {
-  background: var(--accent-hover);
+  background: var(--btn-primary-gradient-hover);
+  border-color: rgba(56, 189, 248, 0.5);
   transform: translateY(-1px);
-}
-
-/* AI Banner */
-.ai-banner {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.ai-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--accent-gradient);
-}
-
-.banner-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-semibold);
-  color: var(--accent);
-  background-color: var(--accent-light);
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-}
-
-.banner-content {
-  flex: 1;
-}
-
-.banner-heading {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.banner-desc {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.banner-desc strong {
-  color: var(--success);
-}
-
-.banner-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.banner-action-btn {
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-}
-
-.banner-action-btn.primary {
-  background-color: var(--accent);
-  color: #ffffff;
-}
-
-.banner-action-btn.primary:hover {
-  background-color: var(--accent-hover);
-}
-
-.banner-action-btn.secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.banner-action-btn.secondary:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45);
 }
 
 /* KPI Grid */
@@ -553,6 +468,242 @@ function dismissBanner(e) {
   color: var(--text-muted);
 }
 
+/* AI Recommendations Opportunities Container */
+.recommendations-container {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(99, 102, 241, 0.04) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.recs-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-shield-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.recs-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.recs-audit-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.recs-audit-all-btn:hover {
+  background: rgba(14, 165, 233, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.recs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.rec-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.rec-card:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.rec-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.rec-type-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.rec-savings {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.rec-product {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rec-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+  flex: 1;
+}
+
+.rec-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.rec-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.conf-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--success);
+}
+
+.rec-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #38bdf8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all var(--transition-fast);
+}
+
+.rec-action-btn:hover {
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.2);
+}
+
+/* Quick NL Inquiries Bar */
+.quick-inquiries-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.quick-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.prompt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.prompt-chip:hover {
+  background-color: rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.chip-icon {
+  font-size: 11px;
+}
+
+.chip-badge {
+  font-size: 8.5px;
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--text-muted);
+}
+
 /* Table Section */
 .table-container-card {
   background-color: var(--bg-card);
@@ -568,6 +719,7 @@ function dismissBanner(e) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .toolbar-title-group {
@@ -580,6 +732,7 @@ function dismissBanner(e) {
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  margin: 0;
 }
 
 .counter-tag {
@@ -591,10 +744,58 @@ function dismissBanner(e) {
   color: var(--text-muted);
 }
 
+.table-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.category-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-tertiary);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.cat-pill {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cat-pill:hover {
+  color: var(--text-primary);
+}
+
+.cat-pill.active {
+  background-color: var(--bg-card);
+  color: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 .table-search-input {
   font-size: 11px;
-  padding: 4px 10px;
-  width: 200px;
+  padding: 5px 10px;
+  width: 220px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.table-search-input:focus {
+  border-color: var(--accent);
 }
 
 .table-responsive {
@@ -730,11 +931,14 @@ function dismissBanner(e) {
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   color: var(--accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .row-action-btn:hover {
   background-color: var(--accent-light);
   border-color: var(--accent);
+  color: #38bdf8;
 }
 
 .text-right {

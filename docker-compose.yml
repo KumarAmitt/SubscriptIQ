@@ -1,15 +1,89 @@
 services:
+  # =============================================================================
+  # 1. PostgreSQL 16 Database
+  # =============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: subscriptiq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: subscriptiq
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d subscriptiq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - subscriptiq-network
+
+  # =============================================================================
+  # 2. FastAPI Backend & AI Analytics Engine
+  # =============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: subscriptiq-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: subscriptiq
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/subscriptiq
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - qdrant_data:/app/database/qdrant_storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 8s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - subscriptiq-network
+
+  # =============================================================================
+  # 3. Vue 3 Frontend (Nginx Production Reverse Proxy)
+  # =============================================================================
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
+      args:
+        - VITE_API_BASE_URL=/api
     container_name: subscriptiq-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
+      - "${FRONTEND_PORT:-5173}:80"
+      - "80:80"
+    networks:
+      - subscriptiq-network
+
+volumes:
+  postgres_data:
+  qdrant_data:
+
+networks:
+  subscriptiq-network:
+    driver: bridge

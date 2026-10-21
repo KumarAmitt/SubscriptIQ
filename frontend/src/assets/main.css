@@ -6,7 +6,7 @@
   --bg-secondary: #161b24;
   --bg-tertiary: #1c222d;
   --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-active: rgba(99, 102, 241, 0.12);
+  --bg-active: rgba(56, 189, 248, 0.12);
   --bg-input: #0d1117;
   --bg-card: #151a23;
   --bg-tooltip: #1c222e;
@@ -20,13 +20,20 @@
   --text-muted: #5e6877;
   --text-inverse: #0d1117;
 
-  /* Accent & Gradients */
-  --accent: #6366f1;
-  --accent-rgb: 99, 102, 241;
-  --accent-hover: #797bf5;
-  --accent-light: rgba(99, 102, 241, 0.15);
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-  --accent-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+  /* Accent & Gradients: Crisp, high-contrast Electric Sky Azure for text/icon readability in both Dark & Light modes */
+  --accent: #38bdf8;
+  --accent-rgb: 56, 189, 248;
+  --accent-hover: #7dd3fc;
+  --accent-light: rgba(56, 189, 248, 0.12);
+  --accent-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  --accent-glow: 0 0 16px rgba(56, 189, 248, 0.35);
+
+  /* Filled Primary Action Buttons: Rich, darker blue background providing high WCAG AAA contrast with white text */
+  --btn-primary-bg: #0369a1;
+  --btn-primary-bg-hover: #075985;
+  --btn-primary-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  --btn-primary-gradient-hover: linear-gradient(135deg, #075985 0%, #0369a1 100%);
+  --btn-primary-border: rgba(56, 189, 248, 0.35);
 
   /* Status Colors */
   --success: #10b981;
@@ -43,7 +50,7 @@
   --statusbar-height: 28px;
   --sidebar-expanded: 230px;
   --sidebar-collapsed: 56px;
-  --chat-expanded: 370px;
+  --chat-expanded: 420px;
 
   /* Typography: Thin, small, crisp modern code-editor typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -79,7 +86,7 @@
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --bg-hover: rgba(0, 0, 0, 0.04);
-  --bg-active: rgba(79, 70, 229, 0.08);
+  --bg-active: rgba(2, 132, 199, 0.08);
   --bg-input: #ffffff;
   --bg-card: #ffffff;
   --bg-tooltip: #1e293b;
@@ -93,12 +100,18 @@
   --text-muted: #94a3b8;
   --text-inverse: #ffffff;
 
-  --accent: #4f46e5;
-  --accent-rgb: 79, 70, 229;
-  --accent-hover: #4338ca;
-  --accent-light: rgba(79, 70, 229, 0.1);
-  --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
-  --accent-glow: 0 0 18px rgba(79, 70, 229, 0.18);
+  --accent: #0284c7;
+  --accent-rgb: 2, 132, 199;
+  --accent-hover: #0369a1;
+  --accent-light: rgba(2, 132, 199, 0.10);
+  --accent-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  --accent-glow: 0 0 16px rgba(2, 132, 199, 0.2);
+
+  --btn-primary-bg: #0284c7;
+  --btn-primary-bg-hover: #0369a1;
+  --btn-primary-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  --btn-primary-gradient-hover: linear-gradient(135deg, #075985 0%, #0369a1 100%);
+  --btn-primary-border: rgba(2, 132, 199, 0.35);
 
   --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1);

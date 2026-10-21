@@ -1,19 +1,47 @@
 <template>
   <header class="app-topbar">
-    <!-- Left Section: App Logo & Workspace Path -->
+    <!-- Left Section: App Logo & Sidebar Toggle -->
     <div class="topbar-left">
       <div
         class="topbar-brand"
-        @click="uiStore.setActiveNav('dashboard', 'Dashboard.vue')"
-        title="SubscriptIQ - AI Intelligence"
+        @click="uiStore.setActiveNav('dashboard')"
+        title="SubscriptIQ - AI Subscription Intelligence"
       >
-        <div class="brand-logo">
-          <span class="logo-glyph">IQ</span>
-          <span class="ai-dot"></span>
+        <div class="brand-logo-wrap">
+          <svg class="brand-logo-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="50%" stop-color="#0284c7" />
+                <stop offset="100%" stop-color="#0369a1" />
+              </linearGradient>
+              <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#2dd4bf" />
+              </linearGradient>
+              <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <!-- Sleek squircle base with inner glass border -->
+            <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#brandGrad)" />
+            <rect x="2.6" y="2.6" width="26.8" height="26.8" rx="7.4" stroke="rgba(255,255,255,0.25)" stroke-width="0.8" />
+            <!-- Continuous intelligence loop / subscription arc -->
+            <path d="M10 16.5C10 13.186 12.686 10.5 16 10.5C19.314 10.5 22 13.186 22 16.5C22 19.814 19.314 22.5 16 22.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" />
+            <!-- Center neural intelligence beacon -->
+            <circle cx="16" cy="16.5" r="2.2" fill="#38bdf8" filter="url(#logoGlow)" />
+            <!-- Dynamic AI growth spark vector -->
+            <path d="M19 8.5H23.5V13" stroke="url(#sparkGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M23.5 8.5L16.5 15.5" stroke="url(#sparkGrad)" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
         </div>
         <div class="brand-text">
           <span class="brand-name">Subscript<span class="brand-highlight">IQ</span></span>
-          <span class="brand-badge">AI</span>
+          <span class="brand-badge">
+            <span class="badge-sparkle">✦</span>
+            <span>AI Powered</span>
+          </span>
         </div>
       </div>
 
@@ -24,38 +52,30 @@
       >
         <Icon name="sidebar-toggle" :size="15" />
       </button>
-
-      <div class="breadcrumb-container">
-        <span class="workspace-label">workspace</span>
-        <span class="slash">/</span>
-        <span class="current-path">subscriptiq.ai</span>
-      </div>
-    </div>
-
-    <!-- Center Section: Command Palette / Search -->
-    <div class="topbar-center">
-      <div class="command-search-bar" @click="focusSearch">
-        <Icon name="search" :size="13" class="search-icon" />
-        <span class="search-placeholder">Search subscriptions, contracts, AI prompts...</span>
-        <div class="search-shortcuts">
-          <kbd>Ctrl</kbd>
-          <kbd>K</kbd>
-        </div>
-      </div>
     </div>
 
     <!-- Right Section: Role Switcher, Theme & Copilot Toggle -->
     <div class="topbar-right">
-      <!-- Role Toggle Pill (Allows testing admin permissions on the fly) -->
+      <!-- Role & Authentication Badge Button -->
       <button
         class="role-badge-btn"
         :class="{ 'is-admin': authStore.isAdmin }"
-        @click="authStore.toggleRole"
-        :title="`Current Role: ${authStore.user.role.toUpperCase()} (Click to toggle role)`"
+        @click="handleRoleAction"
+        :title="authStore.isAdmin ? 'Logged in as Administrator (Click to Log Out)' : 'Standard User (Click to Sign In as Admin)'"
       >
         <span class="role-indicator"></span>
         <span class="role-label">{{ authStore.isAdmin ? 'Role: Admin' : 'Role: User' }}</span>
-        <span class="role-switch-tip">toggle</span>
+        <span class="role-switch-tip">{{ authStore.isAdmin ? 'logout' : 'login' }}</span>
+      </button>
+
+      <!-- About Platform Button -->
+      <button
+        class="icon-btn about-btn"
+        :class="{ 'active': uiStore.activeNav === 'about' || uiStore.activeTabId === 'about' }"
+        @click="uiStore.setActiveNav('about', 'About SubscriptIQ')"
+        title="About SubscriptIQ Platform &amp; FAQ"
+      >
+        <Icon name="info" :size="15" />
       </button>
 
       <!-- Theme Switcher -->
@@ -67,15 +87,15 @@
         <Icon :name="uiStore.theme === 'dark' ? 'sun' : 'moon'" :size="15" />
       </button>
 
-      <!-- AI Copilot Panel Toggle -->
+      <!-- CHAT Panel Toggle -->
       <button
         class="copilot-toggle-btn"
         :class="{ 'active': !uiStore.isChatCollapsed }"
         @click="uiStore.toggleChat"
-        :title="uiStore.isChatCollapsed ? 'Open AI Agent (Ctrl+J)' : 'Collapse AI Agent'"
+        :title="uiStore.isChatCollapsed ? 'Open CHAT (Ctrl+J)' : 'Collapse CHAT'"
       >
         <Icon name="sparkles" :size="14" class="sparkle-icon" />
-        <span class="copilot-label">AI Copilot</span>
+        <span class="copilot-label">CHAT</span>
         <span class="status-pulse"></span>
       </button>
     </div>
@@ -92,6 +112,17 @@ const authStore = useAuthStore()
 
 function focusSearch() {
   uiStore.setActiveNav('dashboard')
+}
+
+function handleRoleAction() {
+  if (authStore.isAdmin) {
+    authStore.logout()
+    if (uiStore.activeNav && uiStore.activeNav.startsWith('admin')) {
+      uiStore.setActiveNav('dashboard')
+    }
+  } else {
+    authStore.openLoginModal()
+  }
 }
 </script>
 
@@ -132,48 +163,37 @@ function focusSearch() {
   background-color: var(--bg-hover);
 }
 
-.brand-logo {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-gradient);
+.brand-logo-wrap {
+  width: 25px;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  box-shadow: var(--accent-glow);
   flex-shrink: 0;
+  transition: transform var(--transition-fast);
 }
 
-.logo-glyph {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.05em;
+.topbar-brand:hover .brand-logo-wrap {
+  transform: scale(1.06);
 }
 
-.ai-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 5px;
-  height: 5px;
-  background-color: var(--info);
-  border-radius: 50%;
-  border: 1px solid var(--bg-secondary);
+.brand-logo-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.4));
 }
 
 .brand-text {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   white-space: nowrap;
 }
 
 .brand-name {
   font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
 }
@@ -183,14 +203,29 @@ function focusSearch() {
 }
 
 .brand-badge {
-  font-size: 9px;
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-medium);
+  font-size: 9.5px;
+  font-family: var(--font-sans);
+  font-weight: 600;
   background: var(--accent-light);
   color: var(--accent);
-  padding: 1px 4px;
-  border-radius: 3px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  padding: 1.5px 7px;
+  border-radius: 9999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  letter-spacing: 0.2px;
+}
+
+.badge-sparkle {
+  font-size: 8px;
+  color: var(--accent);
+  animation: pulse-sparkle 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-sparkle {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.25); }
 }
 
 .icon-btn {

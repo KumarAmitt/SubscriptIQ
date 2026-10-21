@@ -10,12 +10,12 @@
           <span>WORKSPACE</span>
         </div>
 
-        <!-- 1. Dashboard (First Nav Item) -->
+        <!-- 1. Dashboard (Main Overview & Text-to-SQL Interface) -->
         <div class="nav-item-wrapper has-tooltip">
           <button
             class="nav-item"
             :class="{ 'active': uiStore.activeNav === 'dashboard' }"
-            @click="navigate('dashboard', 'Dashboard.vue')"
+            @click="navigate('dashboard')"
           >
             <div class="icon-container">
               <Icon name="dashboard" :size="15" />
@@ -23,150 +23,194 @@
             <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Dashboard</span>
             <span class="nav-badge" v-if="!uiStore.isSidebarCollapsed">Live</span>
           </button>
-          <!-- Hover Tooltip for Collapsed Rail -->
           <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
             <span>Dashboard</span>
-            <span class="tooltip-shortcut">⌘1</span>
           </div>
         </div>
 
-        <!-- Analytics -->
+        <!-- 2. Chat Analysis (In-Depth Analysis & Full Dataset) -->
         <div class="nav-item-wrapper has-tooltip">
           <button
             class="nav-item"
-            :class="{ 'active': uiStore.activeNav === 'analytics' }"
-            @click="navigate('analytics', 'Analytics.ts')"
+            :class="{ 'active': uiStore.activeNav === 'query-analysis' || uiStore.activeTabId === 'query-analysis' }"
+            @click="navigate('query-analysis', 'Chat Analysis')"
           >
             <div class="icon-container">
               <Icon name="analytics" :size="15" />
             </div>
-            <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Spend Analytics</span>
+            <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Chat Analysis</span>
+            <span
+              class="nav-badge count-badge"
+              v-if="!uiStore.isSidebarCollapsed && chatStore.activeQueryResult"
+            >
+              {{ chatStore.activeQueryResult.rowCount }} {{ chatStore.activeQueryResult.rowCount === 1 ? 'row' : 'rows' }}
+            </span>
           </button>
           <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-            <span>Spend Analytics</span>
+            <span>Chat Analysis</span>
           </div>
         </div>
 
-        <!-- AI Agents / Copilot -->
+        <!-- 3. About SubscriptIQ (Features, Benefits & FAQ) -->
         <div class="nav-item-wrapper has-tooltip">
           <button
             class="nav-item"
-            :class="{ 'active': uiStore.activeNav === 'intelligence' }"
-            @click="navigate('intelligence', 'CopilotInsight.ts')"
+            :class="{ 'active': uiStore.activeNav === 'about' || uiStore.activeTabId === 'about' }"
+            @click="navigate('about', 'About SubscriptIQ')"
           >
             <div class="icon-container">
-              <Icon name="sparkles" :size="15" />
+              <Icon name="info" :size="15" />
             </div>
-            <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">AI Intelligence</span>
-            <span class="nav-badge ai" v-if="!uiStore.isSidebarCollapsed">PRO</span>
+            <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">About Platform</span>
+            <span class="nav-badge info-badge" v-if="!uiStore.isSidebarCollapsed">FAQ</span>
           </button>
           <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-            <span>AI Intelligence</span>
+            <span>About SubscriptIQ &amp; FAQ</span>
           </div>
         </div>
       </nav>
 
-      <!-- 2. Admin Section (Visible ONLY when user has Admin role) -->
-      <transition name="fade-slide">
-        <div v-if="authStore.isAdmin" class="admin-group">
-          <div class="nav-divider" v-if="!uiStore.isSidebarCollapsed"></div>
+      <!-- 2. Admin Section -->
+      <div v-if="authStore.isAdmin" class="admin-group">
+        <div class="nav-divider" v-if="!uiStore.isSidebarCollapsed"></div>
 
-          <div
-            class="section-label admin-header"
-            v-if="!uiStore.isSidebarCollapsed"
-            @click="isAdminMenuOpen = !isAdminMenuOpen"
-          >
-            <div class="admin-tag">
-              <Icon name="shield" :size="12" class="shield-icon" />
-              <span>ADMIN PORTAL</span>
+        <div
+          class="section-label admin-header"
+          v-if="!uiStore.isSidebarCollapsed"
+          @click="isAdminMenuOpen = !isAdminMenuOpen"
+        >
+          <div class="admin-tag">
+            <Icon name="shield" :size="12" class="shield-icon" />
+            <span>ADMIN PORTAL</span>
+          </div>
+          <Icon
+            :name="isAdminMenuOpen ? 'chevron-down' : 'chevron-right'"
+            :size="12"
+            class="accordion-arrow"
+          />
+        </div>
+
+        <!-- Admin Submenus: 5 Core Panels -->
+        <div
+          class="admin-submenus"
+          v-show="!uiStore.isSidebarCollapsed ? isAdminMenuOpen : true"
+        >
+          <!-- Panel 1: Schema Manager -->
+          <div class="nav-item-wrapper has-tooltip">
+            <button
+              class="nav-item sub-item"
+              :class="{ 'active': uiStore.activeNav === 'admin-schema' }"
+              @click="navigate('admin-schema', 'Schema Manager')"
+            >
+              <div class="icon-container">
+                <Icon name="database" :size="14" />
+              </div>
+              <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Schema Manager</span>
+            </button>
+            <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+              <span>Admin: Schema Manager</span>
             </div>
-            <Icon
-              :name="isAdminMenuOpen ? 'chevron-down' : 'chevron-right'"
-              :size="12"
-              class="accordion-arrow"
-            />
           </div>
 
-          <!-- Admin Submenus -->
-          <div
-            class="admin-submenus"
-            v-show="!uiStore.isSidebarCollapsed ? isAdminMenuOpen : true"
-          >
-            <!-- Submenu 1: Users & Access -->
-            <div class="nav-item-wrapper has-tooltip">
-              <button
-                class="nav-item sub-item"
-                :class="{ 'active': uiStore.activeNav === 'admin-users' }"
-                @click="navigate('admin-users', 'AdminUsers.vue')"
-              >
-                <div class="icon-container">
-                  <Icon name="users" :size="14" />
-                </div>
-                <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Users & Access</span>
-              </button>
-              <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-                <span>Admin: Users & Access</span>
+          <!-- Panel 2: Examples Manager -->
+          <div class="nav-item-wrapper has-tooltip">
+            <button
+              class="nav-item sub-item"
+              :class="{ 'active': uiStore.activeNav === 'admin-examples' }"
+              @click="navigate('admin-examples', 'Examples Manager')"
+            >
+              <div class="icon-container">
+                <Icon name="book" :size="14" />
               </div>
+              <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Examples Manager</span>
+            </button>
+            <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+              <span>Admin: Examples Manager</span>
             </div>
+          </div>
 
-            <!-- Submenu 2: Subscriptions -->
-            <div class="nav-item-wrapper has-tooltip">
-              <button
-                class="nav-item sub-item"
-                :class="{ 'active': uiStore.activeNav === 'admin-subscriptions' }"
-                @click="navigate('admin-subscriptions', 'AdminSubscriptions.vue')"
-              >
-                <div class="icon-container">
-                  <Icon name="subscriptions" :size="14" />
-                </div>
-                <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">All Subscriptions</span>
-              </button>
-              <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-                <span>Admin: All Subscriptions</span>
+          <!-- Panel 3: Query Logs -->
+          <div class="nav-item-wrapper has-tooltip">
+            <button
+              class="nav-item sub-item"
+              :class="{ 'active': uiStore.activeNav === 'admin-logs' }"
+              @click="navigate('admin-logs', 'Query Logs')"
+            >
+              <div class="icon-container">
+                <Icon name="terminal" :size="14" />
               </div>
+              <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Query Logs</span>
+            </button>
+            <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+              <span>Admin: Query Logs</span>
             </div>
+          </div>
 
-            <!-- Submenu 3: AI Models & Limits -->
-            <div class="nav-item-wrapper has-tooltip">
-              <button
-                class="nav-item sub-item"
-                :class="{ 'active': uiStore.activeNav === 'admin-models' }"
-                @click="navigate('admin-models', 'AdminModels.config.json')"
-              >
-                <div class="icon-container">
-                  <Icon name="models" :size="14" />
-                </div>
-                <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">AI Models & Quotas</span>
-              </button>
-              <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-                <span>Admin: AI Models & Quotas</span>
+          <!-- Panel 4: Guardrails Config -->
+          <div class="nav-item-wrapper has-tooltip">
+            <button
+              class="nav-item sub-item"
+              :class="{ 'active': uiStore.activeNav === 'admin-guardrails' }"
+              @click="navigate('admin-guardrails', 'Guardrails Config')"
+            >
+              <div class="icon-container">
+                <Icon name="lock" :size="14" />
               </div>
+              <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Guardrails Config</span>
+            </button>
+            <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+              <span>Admin: Guardrails Config</span>
             </div>
+          </div>
 
-            <!-- Submenu 4: System Settings -->
-            <div class="nav-item-wrapper has-tooltip">
-              <button
-                class="nav-item sub-item"
-                :class="{ 'active': uiStore.activeNav === 'admin-settings' }"
-                @click="navigate('admin-settings', 'SystemSettings.env')"
-              >
-                <div class="icon-container">
-                  <Icon name="settings" :size="14" />
-                </div>
-                <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">System Settings</span>
-              </button>
-              <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
-                <span>Admin: System Settings</span>
+          <!-- Panel 5: Model Config & Settings -->
+          <div class="nav-item-wrapper has-tooltip">
+            <button
+              class="nav-item sub-item"
+              :class="{ 'active': uiStore.activeNav === 'admin-models' }"
+              @click="navigate('admin-models', 'Model Config & Settings')"
+            >
+              <div class="icon-container">
+                <Icon name="models" :size="14" />
               </div>
+              <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Model Config & Settings</span>
+            </button>
+            <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+              <span>Admin: Model Config & Settings</span>
             </div>
           </div>
         </div>
-      </transition>
+      </div>
+
+      <!-- Locked Admin Section (Shown for non-admin users) -->
+      <div v-else class="admin-locked-group">
+        <div class="nav-divider" v-if="!uiStore.isSidebarCollapsed"></div>
+        <div class="nav-item-wrapper has-tooltip">
+          <button
+            class="nav-item locked-item"
+            @click="authStore.openLoginModal()"
+          >
+            <div class="icon-container">
+              <Icon name="lock" :size="14" class="lock-icon" />
+            </div>
+            <span class="nav-label" v-if="!uiStore.isSidebarCollapsed">Admin Portal</span>
+            <span class="nav-badge lock-badge" v-if="!uiStore.isSidebarCollapsed">Locked</span>
+          </button>
+          <div class="tooltip-box" v-if="uiStore.isSidebarCollapsed">
+            <span>Admin Portal (Login Required)</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Sidebar Footer / User Profile -->
     <div class="sidebar-footer">
-      <div class="user-profile-card" :class="{ 'compact': uiStore.isSidebarCollapsed }">
+      <div
+        class="user-profile-card clickable"
+        :class="{ 'compact': uiStore.isSidebarCollapsed, 'is-admin': authStore.isAdmin }"
+        @click="authStore.isAdmin ? authStore.logout() : authStore.openLoginModal()"
+        :title="authStore.isAdmin ? 'Admin Mode (Click to Log Out)' : 'Standard User (Click to Sign In as Admin)'"
+      >
         <div class="user-avatar" :title="authStore.user.name">
           {{ authStore.user.avatar }}
           <span class="status-dot"></span>
@@ -174,7 +218,7 @@
         <div class="user-meta" v-if="!uiStore.isSidebarCollapsed">
           <div class="user-name">{{ authStore.user.name }}</div>
           <div class="user-role-text">
-            {{ authStore.isAdmin ? 'Admin' : 'Standard User' }}
+            {{ authStore.isAdmin ? 'Admin (click to logout)' : 'User (click to login)' }}
           </div>
         </div>
       </div>
@@ -186,14 +230,20 @@
 import { ref } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat'
 import Icon from '@/components/common/Icon.vue'
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const chatStore = useChatStore()
 
 const isAdminMenuOpen = ref(true)
 
 function navigate(navId, tabName) {
+  if (navId.startsWith('admin') && !authStore.isAdmin) {
+    authStore.openLoginModal()
+    return
+  }
   uiStore.setActiveNav(navId, tabName)
 }
 
@@ -201,7 +251,7 @@ function handleBrandClick() {
   if (uiStore.isSidebarCollapsed) {
     uiStore.toggleSidebar()
   } else {
-    navigate('dashboard', 'Dashboard.vue')
+    navigate('dashboard')
   }
 }
 </script>
@@ -316,6 +366,13 @@ function handleBrandClick() {
   background-color: var(--bg-tertiary);
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+.nav-badge.count-badge {
+  background-color: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-weight: 500;
 }
 
 .nav-badge.ai {
@@ -447,5 +504,42 @@ function handleBrandClick() {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+.user-profile-card.clickable {
+  cursor: pointer;
+}
+
+.user-profile-card.clickable:hover {
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-color);
+}
+
+.user-profile-card.is-admin .status-dot {
+  background-color: var(--accent);
+}
+
+.locked-item {
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.locked-item:hover {
+  opacity: 1;
+  background-color: var(--bg-hover);
+}
+
+.lock-icon {
+  color: var(--warning);
+}
+
+.lock-badge {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
 }
 </style>

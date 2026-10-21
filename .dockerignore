@@ -1,0 +1,8 @@
+node_modules/
+backend/.venv/
+backend/database/pgdata/
+backend/database/pgsockets/
+backend/database/postgres.log
+frontend/dist/
+.git/
+.gitignore

@@ -17,6 +17,15 @@
 
     <!-- Bottom: IDE Status Bar -->
     <AppStatusBar />
+
+    <!-- Global Admin Authentication Modal -->
+    <AdminLoginModal />
+
+    <!-- Global Action Confirmation Modal Popup -->
+    <ConfirmDialogModal />
+
+    <!-- Global Notification Popups (Toast Stack) -->
+    <ToastContainer />
   </div>
 </template>
 
@@ -27,6 +36,9 @@ import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppMainContent from '@/components/layout/AppMainContent.vue'
 import AppChatAgent from '@/components/layout/AppChatAgent.vue'
 import AppStatusBar from '@/components/layout/AppStatusBar.vue'
+import AdminLoginModal from '@/components/common/AdminLoginModal.vue'
+import ConfirmDialogModal from '@/components/common/ConfirmDialogModal.vue'
+import ToastContainer from '@/components/common/ToastContainer.vue'
 import { useUIStore } from '@/stores/ui'
 
 const uiStore = useUIStore()
